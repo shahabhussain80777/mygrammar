@@ -1,47 +1,27 @@
-import streamlit as st
-from transformers import AutoModelForSeq2SeqLM, AutoTokenizer, pipeline
-
-PREFIX = "Fix grammar: "
-
-st.title("AI Grammar & Text Correction App")
-st.write(
-    "Enter a sentence below to check and correct grammatical errors using"
-    " your fine-tuned Hugging Face model."
-)
-
-
 @st.cache_resource
 def load_model():
     repo_id = "shahab1/my-grammar-model"
-    tokenizer = AutoTokenizer.from_pretrained(repo_id)
+    tokenizer = AutoTokenizer.from_pretrained("google/flan-t5-base")
     model = AutoModelForSeq2SeqLM.from_pretrained(repo_id)
     return pipeline("text2text-generation", model=model, tokenizer=tokenizer)
 
 
-with st.spinner("Loading model from Hugging Face... Please wait."):
-    try:
-        corrector = load_model()
-    except Exception as e:
-        st.error(f"Error loading model: {e}")
-        corrector = None
+import json, os, tempfile
+from huggingface_hub import snapshot_download
 
-user_input = st.text_area(
-    "Enter your sentence:", "Me and him went to the store yesterday."
-)
+@st.cache_resource
+def load_model():
+    repo_id = "shahab1/my-grammar-model"
+    path = snapshot_download(repo_id, local_dir=os.path.join(tempfile.gettempdir(), "grammar_model"))
 
-if st.button("Correct Grammar"):
-    if not user_input.strip():
-        st.warning("Please enter some text to correct.")
-    elif corrector is None:
-        st.error("Model is not loaded properly. Please check your configuration or logs.")
-    else:
-        with st.spinner("Correcting..."):
-            results = corrector(
-                PREFIX + user_input.strip(),
-                max_new_tokens=128,
-                num_beams=4,
-            )
-            corrected_text = results[0]["generated_text"]
+    cfg_file = os.path.join(path, "tokenizer_config.json")
+    with open(cfg_file) as f:
+        cfg = json.load(f)
+    if isinstance(cfg.get("extra_special_tokens"), list):
+        cfg.pop("extra_special_tokens")
+    with open(cfg_file, "w") as f:
+        json.dump(cfg, f)
 
-            st.success("Corrected Sentence:")
-            st.write(corrected_text)
+    tokenizer = AutoTokenizer.from_pretrained(path)
+    model = AutoModelForSeq2SeqLM.from_pretrained(path)
+    return pipeline("text2text-generation", model=model, tokenizer=tokenizer)
