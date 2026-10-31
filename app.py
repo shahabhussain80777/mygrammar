@@ -8,8 +8,8 @@ st.write("Enter a sentence below to check and correct grammatical errors using y
 # Load the model with caching so it only loads once
 @st.cache_resource
 def load_model():
-    # Replace 'your-username/my-grammar-model' with your actual Hugging Face repo ID
-    repo_id = "shahab1/my-grammar-model"
+    # Replace with your actual Hugging Face repo ID
+    repo_id = "shahabhussain80777/mygrammar"
     return pipeline("text2text-generation", model=repo_id)
 
 with st.spinner("Loading model from Hugging Face... Please wait."):
