@@ -44,7 +44,7 @@ with st.spinner("Loading model... Please wait."):
         tokenizer = model = device = None
 
 user_input = st.text_area(
-    "Enter your sentence:", "Me and him went to the store yesterday."
+    "Enter your sentence:", "She don't like to eats apples for breakfast."
 )
 
 if st.button("Correct Grammar"):
